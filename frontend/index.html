@@ -14,7 +14,7 @@
     --line: #232A38;
     --text: #E6EAF2;
     --muted: #7C8798;
-    --signal: #4FD1C5;      
+    --signal: #4FD1C5;      /* teal phosphor — "all clear" */
     --signal-dim: #1F4E49;
     --critical: #FF5C6C;
     --high: #FF9F45;
@@ -38,31 +38,19 @@
   .session button{background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;}
   .session button:hover{border-color:var(--signal);color:var(--signal);}
 
-  /* ---------- Login & Signup Views ---------- */
-  #login-view, #signup-view {max-width:380px;margin:80px auto;padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:12px;}
-  #login-view h2, #signup-view h2 {margin-top:0;}
-  #login-view p.hint, #signup-view p.hint {color:var(--muted);font-size:12.5px;line-height:1.6;}
+  /* ---------- Login ---------- */
+  #login-view{max-width:380px;margin:80px auto;padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:12px;}
+  #login-view h2{margin-top:0;}
+  #login-view p.hint{color:var(--muted);font-size:12.5px;line-height:1.6;}
   label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;}
   input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:inherit;font-size:14px;}
   input:focus{outline:none;border-color:var(--signal);}
-  
-  /* Password Toggle Wrapper */
-  .password-wrapper { position: relative; display: flex; align-items: center; }
-  .password-wrapper input { padding-right: 60px; }
-  .toggle-password { position: absolute; right: 10px; background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600; padding: 4px; }
-  .toggle-password:hover { color: var(--text); }
-  
-  /* Auth Switch Links */
-  .auth-switch { text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted); padding-top: 18px; border-top: 1px solid var(--line); }
-  .auth-switch a { color: var(--signal); text-decoration: none; cursor: pointer; font-weight: 500; margin-left: 4px; }
-  .auth-switch a:hover { text-decoration: underline; }
-
   .btn{display:inline-flex;align-items:center;gap:8px;background:var(--signal);color:#04211E;border:none;border-radius:6px;padding:10px 18px;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;}
   .btn:hover{filter:brightness(1.08);}
   .btn.ghost{background:none;border:1px solid var(--line);color:var(--text);}
   .btn.ghost:hover{border-color:var(--signal);color:var(--signal);}
   .btn.small{padding:6px 10px;font-size:12px;}
-  #login-error, #signup-error {color:var(--critical);font-size:12.5px;margin-top:10px;min-height:16px;text-align:center;}
+  #login-error{color:var(--critical);font-size:12.5px;margin-top:10px;min-height:16px;}
 
   /* ---------- Stat strip ---------- */
   .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:28px;}
@@ -111,10 +99,14 @@
   .alert-body{flex:1;}
   .alert-title{font-weight:600;margin-bottom:4px;}
   .alert-desc{color:var(--muted);font-size:12.5px;line-height:1.6;}
+  .alert-ai{margin-top:8px;font-size:12.5px;background:var(--panel-2);border-radius:6px;padding:10px 12px;white-space:pre-wrap;line-height:1.6;}
+  .alert-ai .src{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
   .alert-actions{display:flex;flex-direction:column;gap:6px;}
   select.status{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 8px;font-family:inherit;font-size:12px;}
 
   .empty{color:var(--muted);font-size:13px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:10px;}
+
+  .diff{background:#000;border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;white-space:pre-wrap;color:#9AE6B4;max-height:160px;overflow:auto;margin-top:8px;}
 
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--line);}
@@ -135,46 +127,13 @@
   <div class="eyebrow">WebGuard</div>
   <h2>Sign in</h2>
   <p class="hint">Continuous defacement detection &amp; vulnerability monitoring for your web assets.</p>
-  
   <label>Email</label>
   <input id="login-email" type="email" placeholder="admin@webguard.local" />
-  
   <label>Password</label>
-  <div class="password-wrapper">
-    <input id="login-password" type="password" placeholder="••••••••" />
-    <button type="button" class="toggle-password" onclick="togglePassword('login-password', this)">Show</button>
-  </div>
-  
+  <input id="login-password" type="password" placeholder="••••••••" />
   <div style="margin-top:18px;"><button class="btn" onclick="doLogin()" style="width:100%;justify-content:center;">Sign in</button></div>
   <div id="login-error"></div>
-  
-  <p class="hint" style="margin-top:18px; text-align:center;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code>.</p>
-  
-  <div class="auth-switch">
-    Don't have an account? <a onclick="showSignup()">Sign up</a>
-  </div>
-</div>
-
-<div id="signup-view" class="hidden">
-  <div class="eyebrow">WebGuard</div>
-  <h2>Create Account</h2>
-  <p class="hint">Join WebGuard to protect and monitor your web assets.</p>
-  
-  <label>Email</label>
-  <input id="signup-email" type="email" placeholder="you@example.com" />
-  
-  <label>Password</label>
-  <div class="password-wrapper">
-    <input id="signup-password" type="password" placeholder="••••••••" />
-    <button type="button" class="toggle-password" onclick="togglePassword('signup-password', this)">Show</button>
-  </div>
-
-  <div style="margin-top:18px;"><button class="btn" onclick="doSignup()" style="width:100%;justify-content:center;">Sign Up</button></div>
-  <div id="signup-error"></div>
-  
-  <div class="auth-switch">
-    Already have an account? <a onclick="showLogin()">Sign in</a>
-  </div>
+  <p class="hint" style="margin-top:18px;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code> (override via env vars — change this immediately).</p>
 </div>
 
 <div id="app" class="hidden">
@@ -233,80 +192,27 @@
     </table>
   </section>
 
-  <footer>WebGuard MVP Platform · Demo Mode Active</footer>
+  <footer>WebGuard · AI-assisted risk scoring falls back to deterministic rules when no AI key is configured.</footer>
 </div>
 
 <script>
-// Authentication State Variables
+const API = "";
 let TOKEN = localStorage.getItem("wg_token") || "";
 let ROLE = localStorage.getItem("wg_role") || "";
 let EMAIL = localStorage.getItem("wg_email") || "";
 
-// --- UI Navigation & Toggles ---
-
-function showSignup() {
-  document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("signup-view").classList.remove("hidden");
-  document.getElementById("login-error").textContent = "";
+function authHeaders(json=true){
+  const h = {"Authorization": "Bearer " + TOKEN};
+  if(json) h["Content-Type"] = "application/json";
+  return h;
 }
 
-function showLogin() {
-  document.getElementById("signup-view").classList.add("hidden");
-  document.getElementById("login-view").classList.remove("hidden");
-  document.getElementById("signup-error").textContent = "";
-}
-
-function togglePassword(inputId, btnElement) {
-  const input = document.getElementById(inputId);
-  if (input.type === "password") {
-    input.type = "text";
-    btnElement.textContent = "Hide";
-  } else {
-    input.type = "password";
-    btnElement.textContent = "Show";
-  }
-}
-
-function switchTab(name){
-  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  ["overview","alerts","audit"].forEach(t => {
-    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
-  });
-}
-
-// --- Authentication Logic (Mocked for GitHub Pages) ---
-
-async function doSignup(){
-  const email = document.getElementById("signup-email").value;
-  const password = document.getElementById("signup-password").value;
-  const errEl = document.getElementById("signup-error");
-  errEl.textContent = "";
-
-  if(!email || !password) {
-    errEl.textContent = "Please fill in all fields.";
-    return;
-  }
-  
-  if(password.length < 6) {
-    errEl.textContent = "Password must be at least 6 characters long.";
-    return;
-  }
-  
-  // Save credentials to browser storage to act as our "database"
-  localStorage.setItem("mock_db_email", email);
-  localStorage.setItem("mock_db_password", password);
-  
-  // Set session variables and log in
-  TOKEN = "demo-token-signup";
-  ROLE = "user";
-  EMAIL = email;
-  
-  localStorage.setItem("wg_token", TOKEN);
-  localStorage.setItem("wg_role", ROLE);
-  localStorage.setItem("wg_email", EMAIL);
-  
-  document.getElementById("signup-view").classList.add("hidden");
-  boot();
+async function api(path, opts={}){
+  const res = await fetch(API + path, opts);
+  if(res.status === 401){ logout(); throw new Error("Session expired"); }
+  if(!res.ok){ const t = await res.text(); throw new Error(t); }
+  if(res.status === 204) return null;
+  return res.json();
 }
 
 async function doLogin(){
@@ -314,101 +220,177 @@ async function doLogin(){
   const password = document.getElementById("login-password").value;
   const errEl = document.getElementById("login-error");
   errEl.textContent = "";
-
-  if(!email || !password) {
-    errEl.textContent = "Please enter an email and password.";
-    return;
-  }
-  
-  // Retrieve the registered user from browser storage
-  const storedEmail = localStorage.getItem("mock_db_email");
-  const storedPassword = localStorage.getItem("mock_db_password");
-  
-  // Validation: Check against default Admin OR recently Registered User
-  const isAdmin = (email === "admin@webguard.local" && password === "ChangeMe123!");
-  const isRegisteredUser = (email === storedEmail && password === storedPassword);
-
-  if(isAdmin || isRegisteredUser) {
-    TOKEN = "demo-token-123";
-    ROLE = isAdmin ? "admin" : "user"; 
-    EMAIL = email;
-    
+  try{
+    const body = new URLSearchParams();
+    body.set("username", email);
+    body.set("password", password);
+    const res = await fetch(API + "/api/auth/login", {method:"POST", body});
+    if(!res.ok){ throw new Error("Invalid credentials"); }
+    const data = await res.json();
+    TOKEN = data.access_token; ROLE = data.role; EMAIL = data.email;
     localStorage.setItem("wg_token", TOKEN);
     localStorage.setItem("wg_role", ROLE);
     localStorage.setItem("wg_email", EMAIL);
     boot();
-  } else {
-    // Show error if validation fails
-    errEl.textContent = "Invalid email or password. Please try again or sign up.";
+  }catch(e){
+    errEl.textContent = "Sign-in failed. Check your email and password.";
   }
 }
 
 function logout(){
-  TOKEN = ""; 
-  localStorage.removeItem("wg_token"); 
-  localStorage.removeItem("wg_role"); 
-  localStorage.removeItem("wg_email");
-  
+  TOKEN = ""; localStorage.removeItem("wg_token"); localStorage.removeItem("wg_role"); localStorage.removeItem("wg_email");
   document.getElementById("app").classList.add("hidden");
   document.getElementById("login-view").classList.remove("hidden");
-  document.getElementById("signup-view").classList.add("hidden");
-  
-  // Clear inputs on logout
-  document.getElementById("login-password").value = "";
-  document.getElementById("signup-password").value = "";
 }
 
-function boot(){
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  ["overview","alerts","audit"].forEach(t => {
+    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
+  });
+  if(name === "alerts") loadAlerts();
+  if(name === "audit") loadAudit();
+}
+
+async function boot(){
   document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("signup-view").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("who").textContent = EMAIL + " · " + ROLE;
-  
-  loadMockData();
+  await Promise.all([loadStats(), loadAssets()]);
 }
 
-// --- Mock Data Injection for Dashboard Demo ---
-
-function loadMockData() {
-  // Populate top stats
-  document.getElementById("stats").innerHTML = `
-    <div class="stat"><div class="num">3</div><div class="lbl">Assets</div></div>
-    <div class="stat"><div class="num">3</div><div class="lbl">Active monitors</div></div>
-    <div class="stat crit"><div class="num">1</div><div class="lbl">Open alerts</div></div>
-    <div class="stat crit"><div class="num">1</div><div class="lbl">Critical (open)</div></div>
-    <div class="stat"><div class="num">432</div><div class="lbl">Scans / 24h</div></div>
-    <div class="stat warn"><div class="num">2</div><div class="lbl">Anomalies / 24h</div></div>
+async function loadStats(){
+  const s = await api("/api/dashboard/summary", {headers: authHeaders(false)});
+  const el = document.getElementById("stats");
+  el.innerHTML = `
+    <div class="stat"><div class="num">${s.total_assets}</div><div class="lbl">Assets</div></div>
+    <div class="stat"><div class="num">${s.active_assets}</div><div class="lbl">Active monitors</div></div>
+    <div class="stat crit"><div class="num">${s.open_alerts}</div><div class="lbl">Open alerts</div></div>
+    <div class="stat crit"><div class="num">${s.critical_alerts}</div><div class="lbl">Critical (open)</div></div>
+    <div class="stat"><div class="num">${s.scans_last_24h}</div><div class="lbl">Scans / 24h</div></div>
+    <div class="stat warn"><div class="num">${s.anomalies_last_24h}</div><div class="lbl">Anomalies / 24h</div></div>
   `;
+}
 
-  // Populate assets
-  document.getElementById("assets-list").innerHTML = `
-    <div class="asset">
-      <div class="asset-row">
-        <span class="dot ok"></span>
-        <div>
-          <div class="asset-name">Corporate Homepage</div>
-          <div class="asset-url">https://example.com</div>
+function pulseBar(scans){
+  const bars = scans.slice(0,20).reverse().map(s => {
+    const h = Math.max(4, Math.min(22, Math.round((s.change_score/100)*22)+4));
+    const hot = s.is_anomaly ? "hot" : "";
+    return `<i class="${hot}" style="height:${h}px"></i>`;
+  }).join("");
+  return `<div class="pulse">${bars}</div>`;
+}
+
+async function loadAssets(){
+  const assets = await api("/api/assets", {headers: authHeaders(false)});
+  const container = document.getElementById("assets-list");
+  if(assets.length === 0){ container.innerHTML = '<div class="empty">No assets yet — add your first website above.</div>'; return; }
+
+  const cards = await Promise.all(assets.map(async a => {
+    let scans = [];
+    try{ scans = await api(`/api/scans/asset/${a.id}?limit=20`, {headers: authHeaders(false)}); }catch(e){}
+    const statusClass = a.last_status === "ok" ? "ok" : a.last_status === "anomaly" ? "anomaly" : a.last_status === "down" ? "down" : "unknown";
+    const lastChecked = a.last_checked_at ? new Date(a.last_checked_at).toLocaleString() : "never";
+    return `
+      <div class="asset">
+        <div class="asset-row">
+          <span class="dot ${statusClass}"></span>
+          <div>
+            <div class="asset-name">${escapeHtml(a.name)}</div>
+            <div class="asset-url">${escapeHtml(a.url)}</div>
+          </div>
+          ${pulseBar(scans)}
+          <div class="asset-meta">
+            <span>every ${a.check_interval_seconds}s</span>
+            <span>last check: ${lastChecked}</span>
+          </div>
+          <div class="asset-actions">
+            <button class="btn ghost small" onclick="scanNow(${a.id})">Scan now</button>
+            <button class="btn ghost small" onclick="resetBaseline(${a.id})">Accept as baseline</button>
+          </div>
         </div>
-        <div class="pulse">
-          <i style="height:12px"></i><i style="height:14px"></i><i style="height:8px"></i><i style="height:10px"></i>
-        </div>
-        <div class="asset-meta">
-          <span>every 300s</span>
-          <span>last check: Just now</span>
-        </div>
-        <div class="asset-actions">
-          <button class="btn ghost small">Scan now</button>
-        </div>
+        ${scans[0] && scans[0].diff_excerpt ? `<div class="diff">${escapeHtml(scans[0].diff_excerpt)}</div>` : ""}
+      </div>`;
+  }));
+  container.innerHTML = cards.join("");
+}
+
+async function createAsset(){
+  const name = document.getElementById("new-name").value.trim();
+  const url = document.getElementById("new-url").value.trim();
+  const interval = parseInt(document.getElementById("new-interval").value || "300", 10);
+  if(!name || !url) return alert("Please provide both a label and a URL.");
+  try{
+    await api("/api/assets", {method:"POST", headers: authHeaders(), body: JSON.stringify({name, url, check_interval_seconds: interval})});
+    document.getElementById("new-name").value = "";
+    document.getElementById("new-url").value = "";
+    await Promise.all([loadStats(), loadAssets()]);
+  }catch(e){ alert("Could not add asset: " + e.message); }
+}
+
+async function scanNow(id){
+  try{ await api(`/api/assets/${id}/scan`, {method:"POST", headers: authHeaders(false)}); await Promise.all([loadStats(), loadAssets()]); }
+  catch(e){ alert("Scan failed: " + e.message); }
+}
+
+async function resetBaseline(id){
+  if(!confirm("This marks the site's current live content as trusted going forward. Continue?")) return;
+  try{ await api(`/api/assets/${id}/reset-baseline`, {method:"POST", headers: authHeaders(false)}); await loadAssets(); }
+  catch(e){ alert("Failed: " + e.message); }
+}
+
+async function loadAlerts(){
+  const status = document.getElementById("alert-filter").value;
+  const qs = status ? `?status=${status}` : "";
+  const alerts = await api(`/api/alerts${qs}`, {headers: authHeaders(false)});
+  const container = document.getElementById("alerts-list");
+  if(alerts.length === 0){ container.innerHTML = '<div class="empty">No alerts here. Clean bill of health.</div>'; return; }
+  container.innerHTML = alerts.map(a => `
+    <div class="alert ${a.severity}">
+      <span class="sev-badge ${a.severity}">${a.severity}</span>
+      <div class="alert-body">
+        <div class="alert-title">${escapeHtml(a.title)}</div>
+        <div class="alert-desc">${escapeHtml(a.description || "")} · ${new Date(a.created_at).toLocaleString()}</div>
+        ${a.ai_summary ? `<div class="alert-ai"><span class="src">${a.ai_source === 'anthropic' ? 'AI analysis' : 'Rule-based analysis'}</span><br/>${escapeHtml(a.ai_summary)}${a.ai_remediation ? "\n\nRemediation:\n" + escapeHtml(a.ai_remediation) : ""}</div>` : ""}
+      </div>
+      <div class="alert-actions">
+        <select class="status" onchange="updateAlertStatus(${a.id}, this.value)">
+          <option value="open" ${a.status==='open'?'selected':''}>Open</option>
+          <option value="acknowledged" ${a.status==='acknowledged'?'selected':''}>Acknowledged</option>
+          <option value="resolved" ${a.status==='resolved'?'selected':''}>Resolved</option>
+          <option value="false_positive" ${a.status==='false_positive'?'selected':''}>False positive</option>
+        </select>
       </div>
     </div>
-  `;
+  `).join("");
 }
 
-function createAsset() {
-    alert("Asset creation mocked for frontend demo.");
+async function updateAlertStatus(id, status){
+  try{ await api(`/api/alerts/${id}/status`, {method:"PATCH", headers: authHeaders(), body: JSON.stringify({status})}); await Promise.all([loadStats(), loadAlerts()]); }
+  catch(e){ alert("Could not update: " + e.message); }
 }
 
-// Auto-boot if already logged in
+async function loadAudit(){
+  const logs = await api("/api/audit", {headers: authHeaders(false)});
+  const tbody = document.querySelector("#audit-table tbody");
+  tbody.innerHTML = logs.map(l => `
+    <tr>
+      <td>${new Date(l.created_at).toLocaleString()}</td>
+      <td>${escapeHtml(l.user_email || "system")}</td>
+      <td>${escapeHtml(l.action)}</td>
+      <td>${escapeHtml(l.target || "")}</td>
+      <td>${escapeHtml(l.details || "")}</td>
+    </tr>
+  `).join("");
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+// auto-refresh
+setInterval(() => { if(TOKEN) { loadStats(); if(!document.getElementById("tab-overview").classList.contains("hidden")) loadAssets(); } }, 20000);
+
 if(TOKEN){ boot(); }
 </script>
 </body>
