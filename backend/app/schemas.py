@@ -29,6 +29,36 @@ class UserCreate(BaseModel):
         return v
 
 
+class SignupRequest(BaseModel):
+    name: str = Field(min_length=1)
+    email: str
+    password: str = Field(min_length=8)
+
+    @field_validator("email")
+    @classmethod
+    def _check_email(cls, v: str) -> str:
+        if not _EMAIL_RE.match(v):
+            raise ValueError("must be a valid email address")
+        return v
+
+
+class OtpRequiredResponse(BaseModel):
+    otp_required: bool = True
+    email: str
+    purpose: str
+
+
+class OtpVerifyRequest(BaseModel):
+    email: str
+    code: str = Field(min_length=5, max_length=5)
+    purpose: str
+
+
+class OtpResendRequest(BaseModel):
+    email: str
+    purpose: str
+
+
 class UserOut(BaseModel):
     id: int
     email: str
