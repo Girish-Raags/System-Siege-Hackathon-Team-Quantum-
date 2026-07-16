@@ -6,13 +6,6 @@
 <title>WebGuard — Web Security &amp; Defacement Monitoring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script type="text/javascript">
-  (function() {
-      // Initialize EmailJS (Replace this string with your Public Key)
-      emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
-  })();
-</script>
 <style>
   :root{
     --bg: #0A0D12;
@@ -45,24 +38,33 @@
   .session button{background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;}
   .session button:hover{border-color:var(--signal);color:var(--signal);}
 
-  /* ---------- Login, Signup, OTP ---------- */
-  #login-view, #signup-view, #otp-view {max-width:380px;margin:80px auto;padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:12px;}
-  #login-view h2, #signup-view h2, #otp-view h2 {margin-top:0;}
-  #login-view p.hint, #signup-view p.hint, #otp-view p.hint {color:var(--muted);font-size:12.5px;line-height:1.6;}
+  /* ---------- Auth (login / signup / otp) ---------- */
+  .auth-shell{max-width:380px;margin:64px auto;padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:12px;}
+  .auth-shell h2{margin-top:0;}
+  .auth-shell p.hint{color:var(--muted);font-size:12.5px;line-height:1.6;}
   label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;}
   input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:inherit;font-size:14px;}
   input:focus{outline:none;border-color:var(--signal);}
   .btn{display:inline-flex;align-items:center;gap:8px;background:var(--signal);color:#04211E;border:none;border-radius:6px;padding:10px 18px;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;}
   .btn:hover{filter:brightness(1.08);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;filter:none;}
   .btn.ghost{background:none;border:1px solid var(--line);color:var(--text);}
   .btn.ghost:hover{border-color:var(--signal);color:var(--signal);}
+  .btn.danger{background:none;border:1px solid var(--critical);color:var(--critical);}
+  .btn.danger:hover{background:rgba(255,92,108,.12);}
   .btn.small{padding:6px 10px;font-size:12px;}
-  
-  #login-error, #signup-error, #otp-error {color:var(--critical);font-size:12.5px;margin-top:10px;min-height:16px;text-align:center;}
-  
-  .auth-switch { text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted); padding-top: 18px; border-top: 1px solid var(--line); }
-  .auth-switch a { color: var(--signal); text-decoration: none; cursor: pointer; font-weight: 500; margin-left: 4px; }
-  .auth-switch a:hover { text-decoration: underline; }
+  .btn.link{background:none;border:none;color:var(--signal);padding:0;cursor:pointer;font-size:12.5px;text-decoration:underline;}
+  #login-error,#signup-error,#otp-error{color:var(--critical);font-size:12.5px;margin-top:10px;min-height:16px;}
+  .form-note{color:var(--muted);font-size:12.5px;margin-top:16px;text-align:center;}
+
+  .pass-wrap{position:relative;}
+  .pass-wrap input{padding-right:64px;}
+  .pass-toggle{position:absolute;right:6px;top:6px;bottom:6px;background:none;border:1px solid var(--line);color:var(--muted);border-radius:5px;padding:0 10px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;}
+  .pass-toggle:hover{border-color:var(--signal);color:var(--signal);}
+
+  .otp-boxes{display:flex;gap:8px;justify-content:space-between;margin-top:6px;}
+  .otp-boxes input{width:48px;height:56px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:22px;padding:0;}
+  .otp-meta{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:12px;color:var(--muted);}
 
   /* ---------- Stat strip ---------- */
   .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:28px;}
@@ -135,51 +137,67 @@
 </head>
 <body>
 
-<div id="login-view">
+<!-- ---------- LOGIN ---------- -->
+<div id="login-view" class="auth-shell">
   <div class="eyebrow">WebGuard</div>
   <h2>Sign in</h2>
   <p class="hint">Continuous defacement detection &amp; vulnerability monitoring for your web assets.</p>
   <label>Email</label>
-  <input id="login-email" type="email" placeholder="admin@webguard.local" />
+  <input id="login-email" type="email" placeholder="you@company.com" />
   <label>Password</label>
-  <input id="login-password" type="password" placeholder="••••••••" />
-  <div style="margin-top:18px;"><button class="btn" onclick="doLogin()" style="width:100%;justify-content:center;">Sign in</button></div>
+  <div class="pass-wrap">
+    <input id="login-password" type="password" placeholder="••••••••" />
+    <button type="button" class="pass-toggle" onclick="togglePassword('login-password', this)">Show</button>
+  </div>
+  <div style="margin-top:18px;"><button class="btn" id="login-submit" onclick="doLogin()" style="width:100%;justify-content:center;">Sign in</button></div>
   <div id="login-error"></div>
-  <p class="hint" style="margin-top:18px; text-align:center;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code>.</p>
-  
-  <div class="auth-switch">
-    Don't have an account? <a onclick="showSignup()">Sign up</a>
-  </div>
+  <p class="form-note">New here? <button type="button" class="btn link" onclick="showAuthView('signup')">Create an account</button></p>
+  <p class="hint" style="margin-top:18px;">Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code> (override via env vars — change this immediately). Admin sign-in skips the email code step; all other accounts require it.</p>
 </div>
 
-<div id="signup-view" class="hidden">
+<!-- ---------- SIGN UP ---------- -->
+<div id="signup-view" class="auth-shell hidden">
   <div class="eyebrow">WebGuard</div>
-  <h2>Create Account</h2>
-  <p class="hint">Join WebGuard to protect and monitor your web assets.</p>
-  <label>Email</label>
-  <input id="signup-email" type="email" placeholder="you@example.com" />
+  <h2>Create your account</h2>
+  <p class="hint">We'll email you a 5-digit code to confirm it's really you before your account is activated.</p>
+  <label>Full name</label>
+  <input id="signup-name" type="text" placeholder="Jordan Lee" />
+  <label>Work email</label>
+  <input id="signup-email" type="email" placeholder="you@company.com" />
   <label>Password</label>
-  <input id="signup-password" type="password" placeholder="••••••••" />
-  <div style="margin-top:18px;"><button class="btn" onclick="initSignup()" style="width:100%;justify-content:center;">Sign Up</button></div>
-  <div id="signup-error"></div>
-  
-  <div class="auth-switch">
-    Already have an account? <a onclick="showLogin()">Sign in</a>
+  <div class="pass-wrap">
+    <input id="signup-password" type="password" placeholder="At least 8 characters" />
+    <button type="button" class="pass-toggle" onclick="togglePassword('signup-password', this)">Show</button>
   </div>
+  <label>Confirm password</label>
+  <div class="pass-wrap">
+    <input id="signup-password-confirm" type="password" placeholder="Re-enter password" />
+    <button type="button" class="pass-toggle" onclick="togglePassword('signup-password-confirm', this)">Show</button>
+  </div>
+  <div style="margin-top:18px;"><button class="btn" id="signup-submit" onclick="doSignup()" style="width:100%;justify-content:center;">Send verification code</button></div>
+  <div id="signup-error"></div>
+  <p class="form-note">Already have an account? <button type="button" class="btn link" onclick="showAuthView('login')">Sign in</button></p>
 </div>
 
-<div id="otp-view" class="hidden">
+<!-- ---------- OTP VERIFY ---------- -->
+<div id="otp-view" class="auth-shell hidden">
   <div class="eyebrow">WebGuard</div>
-  <h2>2-Step Verification</h2>
-  <p id="otp-message" class="hint">Sending verification code to your email...</p>
-  <label>Verification Code</label>
-  <input id="otp-input" type="text" placeholder="12345" maxlength="5" />
-  <div style="margin-top:18px;"><button class="btn" onclick="verifyOTP()" style="width:100%;justify-content:center;">Verify & Continue</button></div>
-  <div id="otp-error"></div>
-  
-  <div class="auth-switch">
-    <a onclick="showLogin()">Cancel and go back</a>
+  <h2>Enter your code</h2>
+  <p class="hint">We sent a 5-digit code to <strong id="otp-email-display"></strong>. It expires shortly, so enter it soon.</p>
+  <div class="otp-boxes" id="otp-boxes">
+    <input maxlength="1" inputmode="numeric" />
+    <input maxlength="1" inputmode="numeric" />
+    <input maxlength="1" inputmode="numeric" />
+    <input maxlength="1" inputmode="numeric" />
+    <input maxlength="1" inputmode="numeric" />
   </div>
+  <div style="margin-top:18px;"><button class="btn" id="otp-submit" onclick="doVerifyOtp()" style="width:100%;justify-content:center;">Verify &amp; continue</button></div>
+  <div id="otp-error"></div>
+  <div class="otp-meta">
+    <span id="otp-countdown"></span>
+    <button type="button" class="btn link" id="otp-resend" onclick="doResendOtp()">Resend code</button>
+  </div>
+  <p class="form-note"><button type="button" class="btn link" onclick="cancelOtp()">Use a different email</button></p>
 </div>
 
 <div id="app" class="hidden">
@@ -242,27 +260,16 @@
 </div>
 
 <script>
-const API = ""; 
+const API = "";
+const ADMIN_EMAIL = "admin@webguard.local";
 let TOKEN = localStorage.getItem("wg_token") || "";
 let ROLE = localStorage.getItem("wg_role") || "";
 let EMAIL = localStorage.getItem("wg_email") || "";
 
-// 2FA / OTP State Variables
-let currentOTP = null;
-let pendingAction = null; 
-let tempEmail = "";
-let tempPassword = "";
-
-// --- FAKE DATABASE FOR HACKATHON DASHBOARD ---
-// This enables adding/viewing/removing assets perfectly on the frontend without a backend server!
-let mockAssets = JSON.parse(localStorage.getItem("wg_mock_assets")) || [
-  { id: 1, name: "WebGuard Security Setup", url: "https://webguard.local", check_interval_seconds: 300, last_status: "ok", last_checked_at: new Date().toISOString() }
-];
-
-function saveMockAssets() {
-  localStorage.setItem("wg_mock_assets", JSON.stringify(mockAssets));
-}
-// ---------------------------------------------
+// otp flow state
+let otpEmail = "";
+let otpPurpose = ""; // 'login' | 'signup'
+let otpCountdownTimer = null;
 
 function authHeaders(json=true){
   const h = {"Authorization": "Bearer " + TOKEN};
@@ -270,227 +277,207 @@ function authHeaders(json=true){
   return h;
 }
 
-// ---- UI Navigations ----
-function showSignup() {
-  document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("otp-view").classList.add("hidden");
-  document.getElementById("signup-view").classList.remove("hidden");
+async function api(path, opts={}){
+  const res = await fetch(API + path, opts);
+  if(res.status === 401){ logout(); throw new Error("Session expired"); }
+  if(!res.ok){ const t = await res.text(); throw new Error(t); }
+  if(res.status === 204) return null;
+  return res.json();
 }
 
-function showLogin() {
-  document.getElementById("signup-view").classList.add("hidden");
-  document.getElementById("otp-view").classList.add("hidden");
-  document.getElementById("login-view").classList.remove("hidden");
+/* ---------------- password show/hide ---------------- */
+function togglePassword(inputId, btn){
+  const el = document.getElementById(inputId);
+  const showing = el.type === "text";
+  el.type = showing ? "password" : "text";
+  btn.textContent = showing ? "Show" : "Hide";
 }
 
-// ---- Authentication Logic ----
+/* ---------------- auth view switching ---------------- */
+function showAuthView(name){
+  document.getElementById("login-view").classList.toggle("hidden", name !== "login");
+  document.getElementById("signup-view").classList.toggle("hidden", name !== "signup");
+  document.getElementById("otp-view").classList.toggle("hidden", name !== "otp");
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("signup-error").textContent = "";
+  document.getElementById("otp-error").textContent = "";
+}
 
+/* ---------------- login ---------------- */
 async function doLogin(){
   const email = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
   const errEl = document.getElementById("login-error");
+  const btn = document.getElementById("login-submit");
   errEl.textContent = "";
+  if(!email || !password){ errEl.textContent = "Enter your email and password."; return; }
+  btn.disabled = true;
+  try{
+    const body = new URLSearchParams();
+    body.set("username", email);
+    body.set("password", password);
+    const res = await fetch(API + "/api/auth/login", {method:"POST", body});
+    if(!res.ok){ throw new Error("Invalid credentials"); }
+    const data = await res.json();
 
-  if(!email || !password) {
-    errEl.textContent = "Please enter an email and password.";
-    return;
-  }
-  
-  // Rule: Admin bypasses OTP completely
-  if(email === "admin@webguard.local" && password === "ChangeMe123!") {
-    finalizeAuth(email, "admin", "admin-token-123");
-    return;
-  }
-  
-  // Validation against our browser mock-database
-  const storedEmail = localStorage.getItem("mock_db_email");
-  const storedPassword = localStorage.getItem("mock_db_password");
-
-  if(email === storedEmail && password === storedPassword) {
-    triggerOTP('login', email, password);
-  } else {
-    errEl.textContent = "Invalid email or password.";
+    if(data.access_token){
+      // Admin (or any account the server chooses to fast-path) gets a token immediately.
+      completeAuth(data);
+      return;
+    }
+    if(data.otp_required){
+      // Non-admin accounts must confirm a one-time code emailed to them.
+      beginOtp(data.email || email, "login");
+      return;
+    }
+    throw new Error("Unexpected response from server.");
+  }catch(e){
+    errEl.textContent = "Sign-in failed. Check your email and password.";
+  }finally{
+    btn.disabled = false;
   }
 }
 
-async function initSignup(){
+/* ---------------- signup ---------------- */
+async function doSignup(){
+  const name = document.getElementById("signup-name").value.trim();
   const email = document.getElementById("signup-email").value.trim();
   const password = document.getElementById("signup-password").value;
+  const confirm = document.getElementById("signup-password-confirm").value;
   const errEl = document.getElementById("signup-error");
+  const btn = document.getElementById("signup-submit");
   errEl.textContent = "";
 
-  if(!email || !password) {
-    errEl.textContent = "Please fill in all fields.";
-    return;
+  if(!name || !email || !password){ errEl.textContent = "Please fill in every field."; return; }
+  if(email.toLowerCase() === ADMIN_EMAIL){ errEl.textContent = "That email is reserved for the built-in admin account."; return; }
+  if(password.length < 8){ errEl.textContent = "Password must be at least 8 characters."; return; }
+  if(password !== confirm){ errEl.textContent = "Passwords don't match."; return; }
+
+  btn.disabled = true;
+  try{
+    const data = await api("/api/auth/signup", {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({name, email, password})
+    });
+    // Signup always requires the emailed code before the account is usable.
+    beginOtp(data.email || email, "signup");
+  }catch(e){
+    errEl.textContent = "Could not create account: " + e.message;
+  }finally{
+    btn.disabled = false;
   }
-  if(password.length < 6) {
-    errEl.textContent = "Password must be at least 6 characters long.";
-    return;
-  }
-  
-  triggerOTP('signup', email, password);
 }
 
-// ---- REAL EMAIL LOGIC VIA EMAILJS (NO POPUP ALERTS) ----
-async function sendEmailOTP(email, otp) {
-  const msgLabel = document.getElementById("otp-message");
-  
-  try {
-    // Calling the EmailJS Library to send a real email silently
-    // YOU MUST REPLACE THESE STRINGS WITH YOUR EMAILJS ACCOUNT DETAILS
-    await emailjs.send(
-      "YOUR_SERVICE_ID",     // e.g. "service_1234abcd"
-      "YOUR_TEMPLATE_ID",    // e.g. "template_x7z9pq"
-      {
-        to_email: email,     
-        otp_code: otp        
+/* ---------------- otp step ---------------- */
+function beginOtp(email, purpose){
+  otpEmail = email;
+  otpPurpose = purpose;
+  document.getElementById("otp-email-display").textContent = email;
+  const boxes = document.querySelectorAll("#otp-boxes input");
+  boxes.forEach(b => b.value = "");
+  showAuthView("otp");
+  boxes[0].focus();
+  startOtpCountdown(120);
+}
+
+function wireOtpBoxes(){
+  const boxes = Array.from(document.querySelectorAll("#otp-boxes input"));
+  boxes.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      box.value = box.value.replace(/[^0-9]/g, "").slice(0,1);
+      if(box.value && i < boxes.length - 1) boxes[i+1].focus();
+    });
+    box.addEventListener("keydown", (e) => {
+      if(e.key === "Backspace" && !box.value && i > 0) boxes[i-1].focus();
+      if(e.key === "Enter") doVerifyOtp();
+    });
+    box.addEventListener("paste", (e) => {
+      const text = (e.clipboardData || window.clipboardData).getData("text").replace(/[^0-9]/g, "");
+      if(text.length){
+        e.preventDefault();
+        text.slice(0,5).split("").forEach((ch, idx) => { if(boxes[idx]) boxes[idx].value = ch; });
+        boxes[Math.min(text.length,5)-1].focus();
       }
-    );
-    
-    msgLabel.textContent = `A verification code has been successfully sent to ${email}.`;
-    msgLabel.style.color = "var(--signal)";
-    
-  } catch (error) {
-    console.error("EmailJS Error:", error);
-    // If it fails, we show an error in the UI, NOT an alert popup. 
-    // They must fix their EmailJS configuration for it to work.
-    msgLabel.textContent = "Error: Failed to send email. Check EmailJS configuration.";
-    msgLabel.style.color = "var(--critical)";
-  }
+    });
+  });
 }
 
-function triggerOTP(action, email, password) {
-  pendingAction = action;
-  tempEmail = email;
-  tempPassword = password;
-  
-  // Generate a random 5-digit code
-  currentOTP = Math.floor(10000 + Math.random() * 90000).toString();
-
-  // Show OTP View
-  document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("signup-view").classList.add("hidden");
-  document.getElementById("otp-view").classList.remove("hidden");
-  
-  document.getElementById("otp-input").value = "";
-  document.getElementById("otp-error").textContent = "";
-  document.getElementById("otp-message").textContent = "Sending verification code to your email...";
-  document.getElementById("otp-message").style.color = "var(--muted)";
-
-  // Call the function to send the email
-  sendEmailOTP(email, currentOTP);
+function startOtpCountdown(seconds){
+  const el = document.getElementById("otp-countdown");
+  const resendBtn = document.getElementById("otp-resend");
+  clearInterval(otpCountdownTimer);
+  resendBtn.disabled = true;
+  let remaining = seconds;
+  const tick = () => {
+    const m = Math.floor(remaining/60).toString().padStart(1,"0");
+    const s = (remaining%60).toString().padStart(2,"0");
+    el.textContent = remaining > 0 ? `Code expires in ${m}:${s}` : "Code expired";
+    if(remaining <= 0){
+      clearInterval(otpCountdownTimer);
+      resendBtn.disabled = false;
+    }
+    remaining--;
+  };
+  tick();
+  otpCountdownTimer = setInterval(tick, 1000);
 }
 
-function verifyOTP() {
-  const input = document.getElementById("otp-input").value.trim();
+async function doVerifyOtp(){
+  const boxes = document.querySelectorAll("#otp-boxes input");
+  const code = Array.from(boxes).map(b => b.value).join("");
   const errEl = document.getElementById("otp-error");
-
-  if (input !== currentOTP) {
-    errEl.textContent = "Invalid verification code. Please try again.";
-    return;
+  const btn = document.getElementById("otp-submit");
+  errEl.textContent = "";
+  if(code.length !== 5){ errEl.textContent = "Enter all 5 digits."; return; }
+  btn.disabled = true;
+  try{
+    const data = await api("/api/auth/otp/verify", {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: otpEmail, code, purpose: otpPurpose})
+    });
+    clearInterval(otpCountdownTimer);
+    completeAuth(data);
+  }catch(e){
+    errEl.textContent = "That code didn't work. Check it and try again.";
+  }finally{
+    btn.disabled = false;
   }
-
-  // If this was a signup action, officially save them to the mock DB
-  if (pendingAction === 'signup') {
-    localStorage.setItem("mock_db_email", tempEmail);
-    localStorage.setItem("mock_db_password", tempPassword);
-  }
-
-  // Log the user in
-  finalizeAuth(tempEmail, "user", "user-token-" + Date.now());
 }
 
-function finalizeAuth(email, role, token) {
-  TOKEN = token; 
-  ROLE = role; 
-  EMAIL = email;
-  
+async function doResendOtp(){
+  const errEl = document.getElementById("otp-error");
+  errEl.textContent = "";
+  try{
+    await api("/api/auth/otp/resend", {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: otpEmail, purpose: otpPurpose})
+    });
+    startOtpCountdown(120);
+  }catch(e){
+    errEl.textContent = "Couldn't resend the code. Try again in a moment.";
+  }
+}
+
+function cancelOtp(){
+  clearInterval(otpCountdownTimer);
+  showAuthView(otpPurpose === "signup" ? "signup" : "login");
+}
+
+function completeAuth(data){
+  TOKEN = data.access_token; ROLE = data.role; EMAIL = data.email;
   localStorage.setItem("wg_token", TOKEN);
   localStorage.setItem("wg_role", ROLE);
   localStorage.setItem("wg_email", EMAIL);
-
-  document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("signup-view").classList.add("hidden");
-  document.getElementById("otp-view").classList.add("hidden");
-  
   boot();
 }
 
 function logout(){
-  TOKEN = ""; 
-  localStorage.removeItem("wg_token"); 
-  localStorage.removeItem("wg_role"); 
-  localStorage.removeItem("wg_email");
-  
+  TOKEN = ""; localStorage.removeItem("wg_token"); localStorage.removeItem("wg_role"); localStorage.removeItem("wg_email");
   document.getElementById("app").classList.add("hidden");
-  document.getElementById("login-view").classList.remove("hidden");
-  
-  // Clear inputs
-  document.getElementById("login-password").value = "";
-  document.getElementById("signup-password").value = "";
-}
-
-// ---- INTERCEPTED DASHBOARD API LOGIC ----
-
-async function api(path, opts={}){
-  // --- 1. MOCK API INTERCEPTOR FOR GITHUB PAGES ---
-  // This intercepts the network calls so the dashboard works without a Python backend!
-  
-  if (path === "/api/dashboard/summary") {
-    return { total_assets: mockAssets.length, active_assets: mockAssets.length, open_alerts: 0, critical_alerts: 0, scans_last_24h: 124, anomalies_last_24h: 0 };
-  }
-  if (path === "/api/assets" && (!opts.method || opts.method === "GET")) {
-    return mockAssets;
-  }
-  if (path === "/api/assets" && opts.method === "POST") {
-    const body = JSON.parse(opts.body);
-    const newAsset = { id: Date.now(), name: body.name, url: body.url, check_interval_seconds: body.check_interval_seconds, last_status: "ok", last_checked_at: new Date().toISOString() };
-    mockAssets.push(newAsset);
-    saveMockAssets(); // Saves to browser memory
-    return newAsset;
-  }
-  
-  // Intercept the DELETE (Remove) asset request
-  if (path.startsWith("/api/assets/") && opts.method === "DELETE") {
-    const idMatch = path.match(/\/api\/assets\/(\d+)/);
-    if (idMatch) {
-      const id = parseInt(idMatch[1]);
-      mockAssets = mockAssets.filter(a => a.id !== id);
-      saveMockAssets();
-    }
-    return { success: true };
-  }
-
-  // Intercept the SCAN request to update timestamp
-  if (path.includes("/scan")) {
-    const idMatch = path.match(/\/api\/assets\/(\d+)\/scan/);
-    if(idMatch) {
-      const id = parseInt(idMatch[1]);
-      const asset = mockAssets.find(a => a.id === id);
-      if(asset) {
-        asset.last_checked_at = new Date().toISOString();
-        saveMockAssets();
-      }
-    }
-    return { success: true };
-  }
-  
-  if (path.includes("/reset-baseline")) return { success: true };
-  if (path.startsWith("/api/alerts") || path.startsWith("/api/audit")) return [];
-  
-  // --- 2. FALLBACK REAL API LOGIC ---
-  try {
-    const res = await fetch(API + path, opts);
-    if(res.status === 401 && !TOKEN.includes("token")){ 
-      logout(); 
-      throw new Error("Session expired"); 
-    }
-    if(!res.ok){ const t = await res.text(); throw new Error(t); }
-    if(res.status === 204) return null;
-    return res.json();
-  } catch (e) {
-    throw e;
-  }
+  showAuthView("login");
 }
 
 function switchTab(name){
@@ -503,15 +490,10 @@ function switchTab(name){
 }
 
 async function boot(){
-  document.getElementById("login-view").classList.add("hidden");
+  showAuthView(""); // hides login/signup/otp
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("who").textContent = EMAIL + " · " + ROLE;
-  
-  try {
-    await Promise.all([loadStats(), loadAssets()]);
-  } catch (e) {
-    console.warn("Backend API not connected for demo mode.");
-  }
+  await Promise.all([loadStats(), loadAssets()]);
 }
 
 async function loadStats(){
@@ -560,9 +542,9 @@ async function loadAssets(){
             <span>last check: ${lastChecked}</span>
           </div>
           <div class="asset-actions">
-            <button class="btn ghost small" onclick="scanNow(${a.id}, this)">Scan now</button>
+            <button class="btn ghost small" onclick="scanNow(${a.id})">Scan now</button>
             <button class="btn ghost small" onclick="resetBaseline(${a.id})">Accept as baseline</button>
-            <button class="btn ghost small" style="color: var(--critical); border-color: var(--critical);" onclick="deleteAsset(${a.id})">Remove</button>
+            <button class="btn danger small" onclick="removeAsset(${a.id}, '${escapeJs(a.name)}')">Remove</button>
           </div>
         </div>
         ${scans[0] && scans[0].diff_excerpt ? `<div class="diff">${escapeHtml(scans[0].diff_excerpt)}</div>` : ""}
@@ -584,38 +566,23 @@ async function createAsset(){
   }catch(e){ alert("Could not add asset: " + e.message); }
 }
 
-// Function to handle the Scan Now button interaction
-async function scanNow(id, btn) {
-  const originalText = btn.innerText;
-  btn.innerText = "Scanning...";
-  btn.disabled = true;
-  
-  try {
-    // Simulate a slight delay to make the "Scan" feel real
-    await new Promise(resolve => setTimeout(resolve, 800));
-    await api(`/api/assets/${id}/scan`, {method:"POST", headers: authHeaders(false)});
-    await Promise.all([loadStats(), loadAssets()]);
-  } catch(e) { 
-    alert("Scan failed: " + e.message); 
-  }
-}
-
-// NEW Function to delete an asset
-async function deleteAsset(id) {
-  if(!confirm("Are you sure you want to remove this asset?")) return;
-  
-  try {
-    await api(`/api/assets/${id}`, {method: "DELETE", headers: authHeaders(false)});
-    await Promise.all([loadStats(), loadAssets()]);
-  } catch(e) {
-    alert("Failed to delete asset: " + e.message);
-  }
+async function scanNow(id){
+  try{ await api(`/api/assets/${id}/scan`, {method:"POST", headers: authHeaders(false)}); await Promise.all([loadStats(), loadAssets()]); }
+  catch(e){ alert("Scan failed: " + e.message); }
 }
 
 async function resetBaseline(id){
   if(!confirm("This marks the site's current live content as trusted going forward. Continue?")) return;
   try{ await api(`/api/assets/${id}/reset-baseline`, {method:"POST", headers: authHeaders(false)}); await loadAssets(); }
   catch(e){ alert("Failed: " + e.message); }
+}
+
+async function removeAsset(id, name){
+  if(!confirm(`Remove "${name}" from monitoring? This stops all future scans for this asset. This can't be undone.`)) return;
+  try{
+    await api(`/api/assets/${id}`, {method:"DELETE", headers: authHeaders(false)});
+    await Promise.all([loadStats(), loadAssets()]);
+  }catch(e){ alert("Could not remove asset: " + e.message); }
 }
 
 async function loadAlerts(){
@@ -666,10 +633,14 @@ async function loadAudit(){
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 }
+function escapeJs(str){
+  return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
 
 // auto-refresh
-setInterval(() => { if(TOKEN) { try { loadStats(); if(!document.getElementById("tab-overview").classList.contains("hidden")) loadAssets(); } catch(e){} } }, 20000);
+setInterval(() => { if(TOKEN) { loadStats(); if(!document.getElementById("tab-overview").classList.contains("hidden")) loadAssets(); } }, 20000);
 
+wireOtpBoxes();
 if(TOKEN){ boot(); }
 </script>
 </body>
