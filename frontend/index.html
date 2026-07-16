@@ -14,7 +14,7 @@
     --line: #232A38;
     --text: #E6EAF2;
     --muted: #7C8798;
-    --signal: #4FD1C5;      /* teal phosphor — "all clear" */
+    --signal: #4FD1C5;      
     --signal-dim: #1F4E49;
     --critical: #FF5C6C;
     --high: #FF9F45;
@@ -111,14 +111,10 @@
   .alert-body{flex:1;}
   .alert-title{font-weight:600;margin-bottom:4px;}
   .alert-desc{color:var(--muted);font-size:12.5px;line-height:1.6;}
-  .alert-ai{margin-top:8px;font-size:12.5px;background:var(--panel-2);border-radius:6px;padding:10px 12px;white-space:pre-wrap;line-height:1.6;}
-  .alert-ai .src{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
   .alert-actions{display:flex;flex-direction:column;gap:6px;}
   select.status{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 8px;font-family:inherit;font-size:12px;}
 
   .empty{color:var(--muted);font-size:13px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:10px;}
-
-  .diff{background:#000;border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;white-space:pre-wrap;color:#9AE6B4;max-height:160px;overflow:auto;margin-top:8px;}
 
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--line);}
@@ -152,7 +148,7 @@
   <div style="margin-top:18px;"><button class="btn" onclick="doLogin()" style="width:100%;justify-content:center;">Sign in</button></div>
   <div id="login-error"></div>
   
-  <p class="hint" style="margin-top:18px; text-align:center;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code> (override via env vars — change this immediately).</p>
+  <p class="hint" style="margin-top:18px; text-align:center;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code>.</p>
   
   <div class="auth-switch">
     Don't have an account? <a onclick="showSignup()">Sign up</a>
@@ -237,22 +233,17 @@
     </table>
   </section>
 
-  <footer>WebGuard · AI-assisted risk scoring falls back to deterministic rules when no AI key is configured.</footer>
+  <footer>WebGuard MVP Platform · Demo Mode Active</footer>
 </div>
 
 <script>
-const API = "";
+// Authentication State Variables
 let TOKEN = localStorage.getItem("wg_token") || "";
 let ROLE = localStorage.getItem("wg_role") || "";
 let EMAIL = localStorage.getItem("wg_email") || "";
 
-function authHeaders(json=true){
-  const h = {"Authorization": "Bearer " + TOKEN};
-  if(json) h["Content-Type"] = "application/json";
-  return h;
-}
+// --- UI Navigation & Toggles ---
 
-// Toggle visibility between Login and Signup forms
 function showSignup() {
   document.getElementById("login-view").classList.add("hidden");
   document.getElementById("signup-view").classList.remove("hidden");
@@ -265,7 +256,6 @@ function showLogin() {
   document.getElementById("signup-error").textContent = "";
 }
 
-// Toggle Password Visibility
 function togglePassword(inputId, btnElement) {
   const input = document.getElementById(inputId);
   if (input.type === "password") {
@@ -277,12 +267,46 @@ function togglePassword(inputId, btnElement) {
   }
 }
 
-async function api(path, opts={}){
-  const res = await fetch(API + path, opts);
-  if(res.status === 401){ logout(); throw new Error("Session expired"); }
-  if(!res.ok){ const t = await res.text(); throw new Error(t); }
-  if(res.status === 204) return null;
-  return res.json();
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  ["overview","alerts","audit"].forEach(t => {
+    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
+  });
+}
+
+// --- Authentication Logic (Mocked for GitHub Pages) ---
+
+async function doSignup(){
+  const email = document.getElementById("signup-email").value;
+  const password = document.getElementById("signup-password").value;
+  const errEl = document.getElementById("signup-error");
+  errEl.textContent = "";
+
+  if(!email || !password) {
+    errEl.textContent = "Please fill in all fields.";
+    return;
+  }
+  
+  if(password.length < 6) {
+    errEl.textContent = "Password must be at least 6 characters long.";
+    return;
+  }
+  
+  // Save credentials to browser storage to act as our "database"
+  localStorage.setItem("mock_db_email", email);
+  localStorage.setItem("mock_db_password", password);
+  
+  // Set session variables and log in
+  TOKEN = "demo-token-signup";
+  ROLE = "user";
+  EMAIL = email;
+  
+  localStorage.setItem("wg_token", TOKEN);
+  localStorage.setItem("wg_role", ROLE);
+  localStorage.setItem("wg_email", EMAIL);
+  
+  document.getElementById("signup-view").classList.add("hidden");
+  boot();
 }
 
 async function doLogin(){
@@ -296,90 +320,95 @@ async function doLogin(){
     return;
   }
   
-  // MOCK LOGIN FOR GITHUB PAGES DEMO
-  // Replaces the actual fetch request so you can preview the app
-  TOKEN = "demo-token-123";
-  ROLE = "admin";
-  EMAIL = email;
+  // Retrieve the registered user from browser storage
+  const storedEmail = localStorage.getItem("mock_db_email");
+  const storedPassword = localStorage.getItem("mock_db_password");
   
-  localStorage.setItem("wg_token", TOKEN);
-  localStorage.setItem("wg_role", ROLE);
-  localStorage.setItem("wg_email", EMAIL);
-  boot();
-}
+  // Validation: Check against default Admin OR recently Registered User
+  const isAdmin = (email === "admin@webguard.local" && password === "ChangeMe123!");
+  const isRegisteredUser = (email === storedEmail && password === storedPassword);
 
-async function doSignup(){
-  const email = document.getElementById("signup-email").value;
-  const password = document.getElementById("signup-password").value;
-  const errEl = document.getElementById("signup-error");
-  errEl.textContent = "";
-
-  if(!email || !password) {
-    errEl.textContent = "Please fill in all fields.";
-    return;
+  if(isAdmin || isRegisteredUser) {
+    TOKEN = "demo-token-123";
+    ROLE = isAdmin ? "admin" : "user"; 
+    EMAIL = email;
+    
+    localStorage.setItem("wg_token", TOKEN);
+    localStorage.setItem("wg_role", ROLE);
+    localStorage.setItem("wg_email", EMAIL);
+    boot();
+  } else {
+    // Show error if validation fails
+    errEl.textContent = "Invalid email or password. Please try again or sign up.";
   }
-  
-  // MOCK SIGNUP FOR GITHUB PAGES DEMO
-  // Logs the user straight in as if they created an account
-  TOKEN = "demo-token-signup";
-  ROLE = "admin";
-  EMAIL = email;
-  
-  localStorage.setItem("wg_token", TOKEN);
-  localStorage.setItem("wg_role", ROLE);
-  localStorage.setItem("wg_email", EMAIL);
-  
-  document.getElementById("signup-view").classList.add("hidden");
-  boot();
 }
 
 function logout(){
-  TOKEN = ""; localStorage.removeItem("wg_token"); localStorage.removeItem("wg_role"); localStorage.removeItem("wg_email");
+  TOKEN = ""; 
+  localStorage.removeItem("wg_token"); 
+  localStorage.removeItem("wg_role"); 
+  localStorage.removeItem("wg_email");
+  
   document.getElementById("app").classList.add("hidden");
   document.getElementById("login-view").classList.remove("hidden");
   document.getElementById("signup-view").classList.add("hidden");
+  
+  // Clear inputs on logout
+  document.getElementById("login-password").value = "";
+  document.getElementById("signup-password").value = "";
 }
 
-function switchTab(name){
-  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  ["overview","alerts","audit"].forEach(t => {
-    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
-  });
-  if(name === "alerts") loadAlerts();
-  if(name === "audit") loadAudit();
-}
-
-async function boot(){
+function boot(){
   document.getElementById("login-view").classList.add("hidden");
   document.getElementById("signup-view").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("who").textContent = EMAIL + " · " + ROLE;
   
-  // Try to load dashboard data (will fail gracefully if backend is not connected)
-  try {
-    await Promise.all([loadStats(), loadAssets()]);
-  } catch (error) {
-    console.log("Mock Mode: API backend is not connected yet.");
-  }
+  loadMockData();
 }
 
-// ... The rest of your API functions remain unchanged
-async function loadStats(){ /*...*/ }
-async function loadAssets(){ /*...*/ }
-async function createAsset(){ /*...*/ }
-async function scanNow(id){ /*...*/ }
-async function resetBaseline(id){ /*...*/ }
-async function loadAlerts(){ /*...*/ }
-async function updateAlertStatus(id, status){ /*...*/ }
-async function loadAudit(){ /*...*/ }
+// --- Mock Data Injection for Dashboard Demo ---
 
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function loadMockData() {
+  // Populate top stats
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="num">3</div><div class="lbl">Assets</div></div>
+    <div class="stat"><div class="num">3</div><div class="lbl">Active monitors</div></div>
+    <div class="stat crit"><div class="num">1</div><div class="lbl">Open alerts</div></div>
+    <div class="stat crit"><div class="num">1</div><div class="lbl">Critical (open)</div></div>
+    <div class="stat"><div class="num">432</div><div class="lbl">Scans / 24h</div></div>
+    <div class="stat warn"><div class="num">2</div><div class="lbl">Anomalies / 24h</div></div>
+  `;
+
+  // Populate assets
+  document.getElementById("assets-list").innerHTML = `
+    <div class="asset">
+      <div class="asset-row">
+        <span class="dot ok"></span>
+        <div>
+          <div class="asset-name">Corporate Homepage</div>
+          <div class="asset-url">https://example.com</div>
+        </div>
+        <div class="pulse">
+          <i style="height:12px"></i><i style="height:14px"></i><i style="height:8px"></i><i style="height:10px"></i>
+        </div>
+        <div class="asset-meta">
+          <span>every 300s</span>
+          <span>last check: Just now</span>
+        </div>
+        <div class="asset-actions">
+          <button class="btn ghost small">Scan now</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-// auto-refresh
-setInterval(() => { if(TOKEN) { try { loadStats(); if(!document.getElementById("tab-overview").classList.contains("hidden")) loadAssets(); } catch(e){} } }, 20000);
+function createAsset() {
+    alert("Asset creation mocked for frontend demo.");
+}
 
+// Auto-boot if already logged in
 if(TOKEN){ boot(); }
 </script>
 </body>
