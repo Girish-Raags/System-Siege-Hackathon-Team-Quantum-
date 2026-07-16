@@ -38,5 +38,22 @@ class Settings:
 
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "*").split(",")
 
+    # --- One-time codes (login / signup verification) ---
+    OTP_LENGTH: int = int(os.getenv("OTP_LENGTH", "5"))
+    OTP_EXPIRE_MINUTES: int = int(os.getenv("OTP_EXPIRE_MINUTES", "10"))
+    OTP_MAX_ATTEMPTS: int = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+
+    # --- Outbound email (SMTP) ---
+    # If SMTP_HOST is unset, WebGuard logs the email instead of sending it,
+    # the same "fully functional without external config" fallback pattern
+    # used for AI risk scoring.
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "no-reply@webguard.local")
+    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "WebGuard")
+
 
 settings = Settings()
