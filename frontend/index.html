@@ -171,7 +171,7 @@
 <div id="otp-view" class="hidden">
   <div class="eyebrow">WebGuard</div>
   <h2>2-Step Verification</h2>
-  <p id="otp-message" class="hint">Sending verification code...</p>
+  <p id="otp-message" class="hint">Sending verification code to your email...</p>
   <label>Verification Code</label>
   <input id="otp-input" type="text" placeholder="12345" maxlength="5" />
   <div style="margin-top:18px;"><button class="btn" onclick="verifyOTP()" style="width:100%;justify-content:center;">Verify & Continue</button></div>
@@ -254,7 +254,7 @@ let tempEmail = "";
 let tempPassword = "";
 
 // --- FAKE DATABASE FOR HACKATHON DASHBOARD ---
-// This enables adding/viewing assets perfectly on the frontend without a backend server!
+// This enables adding/viewing/removing assets perfectly on the frontend without a backend server!
 let mockAssets = JSON.parse(localStorage.getItem("wg_mock_assets")) || [
   { id: 1, name: "WebGuard Security Setup", url: "https://webguard.local", check_interval_seconds: 300, last_status: "ok", last_checked_at: new Date().toISOString() }
 ];
@@ -331,31 +331,31 @@ async function initSignup(){
   triggerOTP('signup', email, password);
 }
 
-// ---- REAL EMAIL LOGIC VIA EMAILJS ----
+// ---- REAL EMAIL LOGIC VIA EMAILJS (NO POPUP ALERTS) ----
 async function sendEmailOTP(email, otp) {
   const msgLabel = document.getElementById("otp-message");
   
   try {
-    // Calling the EmailJS Library to send a real email
+    // Calling the EmailJS Library to send a real email silently
     // YOU MUST REPLACE THESE STRINGS WITH YOUR EMAILJS ACCOUNT DETAILS
     await emailjs.send(
       "YOUR_SERVICE_ID",     // e.g. "service_1234abcd"
       "YOUR_TEMPLATE_ID",    // e.g. "template_x7z9pq"
       {
-        to_email: email,     // The template must have a variable called {{to_email}}
-        otp_code: otp        // The template must have a variable called {{otp_code}}
+        to_email: email,     
+        otp_code: otp        
       }
     );
     
-    msgLabel.textContent = `A real email has been sent to ${email}. Please check your inbox.`;
+    msgLabel.textContent = `A verification code has been successfully sent to ${email}.`;
     msgLabel.style.color = "var(--signal)";
     
   } catch (error) {
     console.error("EmailJS Error:", error);
-    // Fallback if keys are missing so your demo isn't broken
-    msgLabel.textContent = "Developer Error: EmailJS keys missing. Showing OTP on screen for demo purposes.";
-    msgLabel.style.color = "var(--high)";
-    alert("Hackathon Demo Fallback: Your EmailJS keys are not configured yet.\n\nThe OTP Code is: " + otp);
+    // If it fails, we show an error in the UI, NOT an alert popup. 
+    // They must fix their EmailJS configuration for it to work.
+    msgLabel.textContent = "Error: Failed to send email. Check EmailJS configuration.";
+    msgLabel.style.color = "var(--critical)";
   }
 }
 
@@ -374,7 +374,7 @@ function triggerOTP(action, email, password) {
   
   document.getElementById("otp-input").value = "";
   document.getElementById("otp-error").textContent = "";
-  document.getElementById("otp-message").textContent = "Sending verification code...";
+  document.getElementById("otp-message").textContent = "Sending verification code to your email...";
   document.getElementById("otp-message").style.color = "var(--muted)";
 
   // Call the function to send the email
@@ -449,8 +449,33 @@ async function api(path, opts={}){
     saveMockAssets(); // Saves to browser memory
     return newAsset;
   }
-  if (path.includes("/api/scans/asset/")) return [{ change_score: 5, is_anomaly: false }];
-  if (path.includes("/scan") || path.includes("/reset-baseline")) return { success: true };
+  
+  // Intercept the DELETE (Remove) asset request
+  if (path.startsWith("/api/assets/") && opts.method === "DELETE") {
+    const idMatch = path.match(/\/api\/assets\/(\d+)/);
+    if (idMatch) {
+      const id = parseInt(idMatch[1]);
+      mockAssets = mockAssets.filter(a => a.id !== id);
+      saveMockAssets();
+    }
+    return { success: true };
+  }
+
+  // Intercept the SCAN request to update timestamp
+  if (path.includes("/scan")) {
+    const idMatch = path.match(/\/api\/assets\/(\d+)\/scan/);
+    if(idMatch) {
+      const id = parseInt(idMatch[1]);
+      const asset = mockAssets.find(a => a.id === id);
+      if(asset) {
+        asset.last_checked_at = new Date().toISOString();
+        saveMockAssets();
+      }
+    }
+    return { success: true };
+  }
+  
+  if (path.includes("/reset-baseline")) return { success: true };
   if (path.startsWith("/api/alerts") || path.startsWith("/api/audit")) return [];
   
   // --- 2. FALLBACK REAL API LOGIC ---
@@ -535,8 +560,9 @@ async function loadAssets(){
             <span>last check: ${lastChecked}</span>
           </div>
           <div class="asset-actions">
-            <button class="btn ghost small" onclick="scanNow(${a.id})">Scan now</button>
+            <button class="btn ghost small" onclick="scanNow(${a.id}, this)">Scan now</button>
             <button class="btn ghost small" onclick="resetBaseline(${a.id})">Accept as baseline</button>
+            <button class="btn ghost small" style="color: var(--critical); border-color: var(--critical);" onclick="deleteAsset(${a.id})">Remove</button>
           </div>
         </div>
         ${scans[0] && scans[0].diff_excerpt ? `<div class="diff">${escapeHtml(scans[0].diff_excerpt)}</div>` : ""}
@@ -558,9 +584,32 @@ async function createAsset(){
   }catch(e){ alert("Could not add asset: " + e.message); }
 }
 
-async function scanNow(id){
-  try{ await api(`/api/assets/${id}/scan`, {method:"POST", headers: authHeaders(false)}); await Promise.all([loadStats(), loadAssets()]); }
-  catch(e){ alert("Scan failed: " + e.message); }
+// Function to handle the Scan Now button interaction
+async function scanNow(id, btn) {
+  const originalText = btn.innerText;
+  btn.innerText = "Scanning...";
+  btn.disabled = true;
+  
+  try {
+    // Simulate a slight delay to make the "Scan" feel real
+    await new Promise(resolve => setTimeout(resolve, 800));
+    await api(`/api/assets/${id}/scan`, {method:"POST", headers: authHeaders(false)});
+    await Promise.all([loadStats(), loadAssets()]);
+  } catch(e) { 
+    alert("Scan failed: " + e.message); 
+  }
+}
+
+// NEW Function to delete an asset
+async function deleteAsset(id) {
+  if(!confirm("Are you sure you want to remove this asset?")) return;
+  
+  try {
+    await api(`/api/assets/${id}`, {method: "DELETE", headers: authHeaders(false)});
+    await Promise.all([loadStats(), loadAssets()]);
+  } catch(e) {
+    alert("Failed to delete asset: " + e.message);
+  }
 }
 
 async function resetBaseline(id){
