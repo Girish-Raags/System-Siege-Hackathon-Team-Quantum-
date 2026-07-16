@@ -51,7 +51,9 @@ class Settings:
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    # STARTTLS (typical for port 587) vs implicit TLS (typical for port 465).
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+    SMTP_USE_SSL: bool = os.getenv("SMTP_USE_SSL", "false").lower() == "true"
     SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "no-reply@webguard.local")
     SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "WebGuard")
 
