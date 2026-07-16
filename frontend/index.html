@@ -6,6 +6,13 @@
 <title>WebGuard — Web Security &amp; Defacement Monitoring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function() {
+      // Initialize EmailJS (Replace this string with your Public Key)
+      emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+  })();
+</script>
 <style>
   :root{
     --bg: #0A0D12;
@@ -164,7 +171,7 @@
 <div id="otp-view" class="hidden">
   <div class="eyebrow">WebGuard</div>
   <h2>2-Step Verification</h2>
-  <p class="hint">We've simulated sending a 5-digit code to your email. Please enter it below.</p>
+  <p id="otp-message" class="hint">Sending verification code...</p>
   <label>Verification Code</label>
   <input id="otp-input" type="text" placeholder="12345" maxlength="5" />
   <div style="margin-top:18px;"><button class="btn" onclick="verifyOTP()" style="width:100%;justify-content:center;">Verify & Continue</button></div>
@@ -246,6 +253,17 @@ let pendingAction = null;
 let tempEmail = "";
 let tempPassword = "";
 
+// --- FAKE DATABASE FOR HACKATHON DASHBOARD ---
+// This enables adding/viewing assets perfectly on the frontend without a backend server!
+let mockAssets = JSON.parse(localStorage.getItem("wg_mock_assets")) || [
+  { id: 1, name: "WebGuard Security Setup", url: "https://webguard.local", check_interval_seconds: 300, last_status: "ok", last_checked_at: new Date().toISOString() }
+];
+
+function saveMockAssets() {
+  localStorage.setItem("wg_mock_assets", JSON.stringify(mockAssets));
+}
+// ---------------------------------------------
+
 function authHeaders(json=true){
   const h = {"Authorization": "Bearer " + TOKEN};
   if(json) h["Content-Type"] = "application/json";
@@ -313,25 +331,32 @@ async function initSignup(){
   triggerOTP('signup', email, password);
 }
 
-// NEW EMAIL SENDING LOGIC
+// ---- REAL EMAIL LOGIC VIA EMAILJS ----
 async function sendEmailOTP(email, otp) {
-  // This try/catch represents where you will plug in your real Python Backend URL eventually
-  try {
-    /* await fetch(API + "/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, otp: otp })
-    });
-    */
-    console.log(`Backend email request prepared. Targeting: ${email}`);
-  } catch (error) {
-    console.error("No backend connected to send emails.");
-  }
+  const msgLabel = document.getElementById("otp-message");
   
-  // For the MVP Demo: Since we don't have an active SMTP server yet, simulate the email arrival
-  setTimeout(() => {
-    alert("MOCK EMAIL RECEIVED!\n\nTo: " + email + "\n\nYour WebGuard 2-Step Verification Code is: " + otp);
-  }, 500);
+  try {
+    // Calling the EmailJS Library to send a real email
+    // YOU MUST REPLACE THESE STRINGS WITH YOUR EMAILJS ACCOUNT DETAILS
+    await emailjs.send(
+      "YOUR_SERVICE_ID",     // e.g. "service_1234abcd"
+      "YOUR_TEMPLATE_ID",    // e.g. "template_x7z9pq"
+      {
+        to_email: email,     // The template must have a variable called {{to_email}}
+        otp_code: otp        // The template must have a variable called {{otp_code}}
+      }
+    );
+    
+    msgLabel.textContent = `A real email has been sent to ${email}. Please check your inbox.`;
+    msgLabel.style.color = "var(--signal)";
+    
+  } catch (error) {
+    console.error("EmailJS Error:", error);
+    // Fallback if keys are missing so your demo isn't broken
+    msgLabel.textContent = "Developer Error: EmailJS keys missing. Showing OTP on screen for demo purposes.";
+    msgLabel.style.color = "var(--high)";
+    alert("Hackathon Demo Fallback: Your EmailJS keys are not configured yet.\n\nThe OTP Code is: " + otp);
+  }
 }
 
 function triggerOTP(action, email, password) {
@@ -349,6 +374,8 @@ function triggerOTP(action, email, password) {
   
   document.getElementById("otp-input").value = "";
   document.getElementById("otp-error").textContent = "";
+  document.getElementById("otp-message").textContent = "Sending verification code...";
+  document.getElementById("otp-message").style.color = "var(--muted)";
 
   // Call the function to send the email
   sendEmailOTP(email, currentOTP);
@@ -403,24 +430,40 @@ function logout(){
   document.getElementById("signup-password").value = "";
 }
 
-// ---- Existing Dashboard APIs & Logic ----
+// ---- INTERCEPTED DASHBOARD API LOGIC ----
 
 async function api(path, opts={}){
+  // --- 1. MOCK API INTERCEPTOR FOR GITHUB PAGES ---
+  // This intercepts the network calls so the dashboard works without a Python backend!
+  
+  if (path === "/api/dashboard/summary") {
+    return { total_assets: mockAssets.length, active_assets: mockAssets.length, open_alerts: 0, critical_alerts: 0, scans_last_24h: 124, anomalies_last_24h: 0 };
+  }
+  if (path === "/api/assets" && (!opts.method || opts.method === "GET")) {
+    return mockAssets;
+  }
+  if (path === "/api/assets" && opts.method === "POST") {
+    const body = JSON.parse(opts.body);
+    const newAsset = { id: Date.now(), name: body.name, url: body.url, check_interval_seconds: body.check_interval_seconds, last_status: "ok", last_checked_at: new Date().toISOString() };
+    mockAssets.push(newAsset);
+    saveMockAssets(); // Saves to browser memory
+    return newAsset;
+  }
+  if (path.includes("/api/scans/asset/")) return [{ change_score: 5, is_anomaly: false }];
+  if (path.includes("/scan") || path.includes("/reset-baseline")) return { success: true };
+  if (path.startsWith("/api/alerts") || path.startsWith("/api/audit")) return [];
+  
+  // --- 2. FALLBACK REAL API LOGIC ---
   try {
     const res = await fetch(API + path, opts);
-    
-    // FIX FOR LOGOUT BUG: Ignore the 401 Unauthorized check if we are using a mock demo token
-    // (This stops your backend from kicking you out of the hackathon demo)
     if(res.status === 401 && !TOKEN.includes("token")){ 
       logout(); 
       throw new Error("Session expired"); 
     }
-    
     if(!res.ok){ const t = await res.text(); throw new Error(t); }
     if(res.status === 204) return null;
     return res.json();
   } catch (e) {
-    // Fails silently in the background without breaking the page layout
     throw e;
   }
 }
