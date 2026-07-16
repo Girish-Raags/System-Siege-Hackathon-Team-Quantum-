@@ -12,7 +12,7 @@ from app.schemas import (
 from app.core.security import verify_password, create_access_token, hash_password
 from app.core.audit import log_action
 from app.core.otp import create_otp, verify_otp, latest_pending
-from app.core.mailer import send_otp_email
+from app.core.mailer import send_otp_email, MailerError
 from app.config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -46,7 +46,10 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
         return _issue_token(user)
 
     code = create_otp(db, user.email, OtpPurpose.login)
-    send_otp_email(user.email, code, "login")
+    try:
+        send_otp_email(user.email, code, "login")
+    except MailerError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     log_action(db, "login_otp_requested", user=user, ip_address=_client_ip(request))
     return OtpRequiredResponse(email=user.email, purpose="login")
 
@@ -64,7 +67,10 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
         pending_full_name=payload.name,
         pending_hashed_password=hash_password(payload.password),
     )
-    send_otp_email(email, code, "signup")
+    try:
+        send_otp_email(email, code, "signup")
+    except MailerError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     return OtpRequiredResponse(email=email, purpose="signup")
 
 
@@ -115,20 +121,23 @@ def otp_resend(payload: OtpResendRequest, db: Session = Depends(get_db)):
 
     email = payload.email.lower()
 
-    if purpose == OtpPurpose.login:
-        user = db.query(User).filter(User.email == email).first()
-        if user:  # don't reveal whether the account exists either way
-            code = create_otp(db, email, OtpPurpose.login)
-            send_otp_email(email, code, "login")
-    else:
-        prior = latest_pending(db, email, OtpPurpose.signup)
-        if not prior or not prior.pending_hashed_password:
-            raise HTTPException(status_code=400, detail="Start the signup form again.")
-        code = create_otp(
-            db, email, OtpPurpose.signup,
-            pending_full_name=prior.pending_full_name,
-            pending_hashed_password=prior.pending_hashed_password,
-        )
-        send_otp_email(email, code, "signup")
+    try:
+        if purpose == OtpPurpose.login:
+            user = db.query(User).filter(User.email == email).first()
+            if user:  # don't reveal whether the account exists either way
+                code = create_otp(db, email, OtpPurpose.login)
+                send_otp_email(email, code, "login")
+        else:
+            prior = latest_pending(db, email, OtpPurpose.signup)
+            if not prior or not prior.pending_hashed_password:
+                raise HTTPException(status_code=400, detail="Start the signup form again.")
+            code = create_otp(
+                db, email, OtpPurpose.signup,
+                pending_full_name=prior.pending_full_name,
+                pending_hashed_password=prior.pending_hashed_password,
+            )
+            send_otp_email(email, code, "signup")
+    except MailerError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     return OtpRequiredResponse(email=email, purpose=payload.purpose)
