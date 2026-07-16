@@ -13,6 +13,11 @@ class Role(str, enum.Enum):
     viewer = "viewer"     # read-only dashboards
 
 
+class OtpPurpose(str, enum.Enum):
+    login = "login"
+    signup = "signup"
+
+
 class AlertSeverity(str, enum.Enum):
     critical = "critical"
     high = "high"
@@ -116,6 +121,29 @@ class Alert(Base):
 
     asset = relationship("Asset", back_populates="alerts")
     scan = relationship("Scan", back_populates="alert")
+
+
+class OtpCode(Base):
+    """One-time codes emailed to users for login and signup verification.
+
+    For signup, the account isn't created until the code is verified, so the
+    pending name/password hash are stashed here rather than in the users
+    table.
+    """
+    __tablename__ = "otp_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, index=True, nullable=False)
+    purpose = Column(Enum(OtpPurpose), nullable=False)
+    code_hash = Column(String, nullable=False)
+
+    pending_full_name = Column(String, nullable=True)
+    pending_hashed_password = Column(String, nullable=True)
+
+    attempts = Column(Integer, default=0)
+    expires_at = Column(DateTime, nullable=False)
+    consumed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class AuditLog(Base):
