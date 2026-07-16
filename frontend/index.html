@@ -53,7 +53,7 @@
   .toggle-password:hover { color: var(--text); }
   
   /* Auth Switch Links */
-  .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .auth-switch { text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted); padding-top: 18px; border-top: 1px solid var(--line); }
   .auth-switch a { color: var(--signal); text-decoration: none; cursor: pointer; font-weight: 500; margin-left: 4px; }
   .auth-switch a:hover { text-decoration: underline; }
 
@@ -135,7 +135,6 @@
 </head>
 <body>
 
-<!-- Login View -->
 <div id="login-view">
   <div class="eyebrow">WebGuard</div>
   <h2>Sign in</h2>
@@ -153,12 +152,13 @@
   <div style="margin-top:18px;"><button class="btn" onclick="doLogin()" style="width:100%;justify-content:center;">Sign in</button></div>
   <div id="login-error"></div>
   
+  <p class="hint" style="margin-top:18px; text-align:center;">First run? Default admin is <code>admin@webguard.local</code> / <code>ChangeMe123!</code> (override via env vars — change this immediately).</p>
+  
   <div class="auth-switch">
     Don't have an account? <a onclick="showSignup()">Sign up</a>
   </div>
 </div>
 
-<!-- Sign Up View -->
 <div id="signup-view" class="hidden">
   <div class="eyebrow">WebGuard</div>
   <h2>Create Account</h2>
