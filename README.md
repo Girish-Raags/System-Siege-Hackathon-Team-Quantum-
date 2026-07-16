@@ -9,6 +9,8 @@ uses Claude (with a deterministic rule-based fallback) to score risk and suggest
 remediation — all behind role-based access control with a full audit trail.
 
 > Domain: **Cybersecurity / Web Application Security & Monitoring**
+
+
 Website: https://system-siege-hackathon-team-quantum-1.onrender.com/
 ---
 
