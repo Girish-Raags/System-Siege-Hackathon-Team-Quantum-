@@ -1,0 +1,42 @@
+# --- Outbound email (required for real OTP emails) ---
+# Pick ONE provider block below and fill in your own credentials.
+# If SMTP_HOST is left blank, WebGuard just logs OTP codes instead of
+# emailing them (dev mode) -- that's what you've been seeing so far.
+
+# --- Gmail ---
+# 1. Enable 2-Step Verification on the Google account.
+# 2. Create an "App Password" at https://myaccount.google.com/apppasswords
+#    (your normal Gmail password will NOT work here).
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_16_char_app_password
+SMTP_FROM_EMAIL=your_email@gmail.com
+SMTP_FROM_NAME=WebGuard
+
+# --- SendGrid (alternative) ---
+# SMTP_HOST=smtp.sendgrid.net
+# SMTP_PORT=587
+# SMTP_USE_TLS=true
+# SMTP_USE_SSL=false
+# SMTP_USERNAME=apikey
+# SMTP_PASSWORD=your_sendgrid_api_key
+# SMTP_FROM_EMAIL=no-reply@yourdomain.com
+# SMTP_FROM_NAME=WebGuard
+
+# --- Outlook / Microsoft 365 (alternative) ---
+# SMTP_HOST=smtp.office365.com
+# SMTP_PORT=587
+# SMTP_USE_TLS=true
+# SMTP_USE_SSL=false
+# SMTP_USERNAME=your_email@outlook.com
+# SMTP_PASSWORD=your_password_or_app_password
+# SMTP_FROM_EMAIL=your_email@outlook.com
+# SMTP_FROM_NAME=WebGuard
+
+# --- OTP behavior (optional overrides) ---
+OTP_LENGTH=5
+OTP_EXPIRE_MINUTES=10
+OTP_MAX_ATTEMPTS=5
